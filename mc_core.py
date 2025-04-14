@@ -1,4 +1,3 @@
-
 # Core Library Utilities
 import numpy as np
 import pickle
@@ -107,7 +106,7 @@ class privateKeyH84:
 		"""Initalizer that will set S & P matricies to random if not given values"""
 		#Hamming 8,4 in standard
 		self.G = np.matrix([
-		[1,0,0,0,0,1,1,1],
+		[1,0,0,0,0,1,1,0],
 		[0,1,0,0,1,0,1,1],
 		[0,0,1,0,1,1,0,1],
 		[0,0,0,1,1,1,1,0]
@@ -132,16 +131,16 @@ class privateKeyH84:
 
 	def printCode(self):
 		"""Canonical print to screen function"""
-		print "S: \n" + str(self.S) + "\n"
-		print "P: \n" + str(self.P) + "\n"
-		print "GPrime: \n" + str(self.makeGPrime()) + "\n"
+		print("S: \n" + str(self.S) + "\n")
+		print("P: \n" + str(self.P) + "\n")
+		print("GPrime: \n" + str(self.makeGPrime()) + "\n")
 
 	def writeKeyToFile(self, keyFile):
 		"""Saves key to a pickle file"""
 		try:
 			pickle.dump(self, open(keyFile,"wb"))
 		except:
-			print "Could not save key file to: ",keyFile
+			print("Could not save key file to: ",keyFile)
 			exit(1)
 
 	def readKeyFromFile(self,keyFile):
@@ -151,7 +150,7 @@ class privateKeyH84:
 			self.S = newPriv.S
 			self.P = newPriv.P
 		except:
-			print "Could not load key file from: ",keyFile
+			print("Could not load key file from: ",keyFile)
 			exit(1)
 
 	def makeGPrime(self):
@@ -173,10 +172,9 @@ class privateKeyH84:
 		mf = open(f+".decoded","wb")
 		
 		while cb1 and cb2:
-
-			#First Byte of Cipher Text
+      		#First Byte of Cipher Text
 			c_1 = '{0:08b}'.format(ord(cb1))[0:8]
- 			c1_l = []
+			c1_l = []
 			m1 = ""
 			for s in c_1:
 				c1_l.append(s)
@@ -189,7 +187,7 @@ class privateKeyH84:
 
 			#Second Byte of Cipher Text
 			c_2 = '{0:08b}'.format(ord(cb2))[0:8]
- 			c2_l = []
+			c2_l = []
 			m2 = ""
 			for s in c_2:
 				c2_l.append(s)
@@ -201,7 +199,12 @@ class privateKeyH84:
 				m2 += str(d2.item(d))
 
 			#print m1+m2
-			mf.write(chr(int(m1+m2,2)))
+			# mf.write(chr((m1 + m2, 2)))
+			# character = chr(int(m1 + m2, 2))
+			# mf.write(character)
+			# mf.write(chr(int(m1+m2,2)))
+			mf.write(bytes([int(m1 + m2, 2)]))
+
 			cb1 = cf.read(1)
 			cb2 = cf.read(1)
 
@@ -241,17 +244,20 @@ class publicKeyH84:
 	"""Public Key Data Structure"""
 	def __init__(self,GPrime):
 		self.GPrime = GPrime
+		
+		self.error_vector = random.randint(1,7)
+		print(self.error_vector)
 
 	def printCode(self):
 		"""Canonical print to screen"""
-		print "GPrime: \n" + str(self.GPrime) + "\n"
+		print("GPrime: \n" + str(self.GPrime) + "\n")
 
 	def writeKeyToFile(self, keyFile):
 		"""Saves key to a pickle file"""
 		try:
 			pickle.dump(self, open(keyFile,"wb"))
 		except:
-			print "Could not save key file to: ",keyFile
+			print("Could not save key file to: ",keyFile)
 			exit(1)
 
 	def readKeyFromFile(self,keyFile):
@@ -260,18 +266,19 @@ class publicKeyH84:
 			newPub = pickle.load( open(keyFile,"rb"))
 			self.GPrime = newPub.GPrime
 		except:
-			print "Could not load key file from: ",keyFile
+			print("Could not load key file from: ",keyFile)
 			exit(1)
+	
+#	def generate_error_vector(self, error_vector):
+#		self.error_vector = random.randint(1,7)
 
 	def encrypt(self,m):
 		"""When given a message will encode"""		
 		#Error vector will be random
 		#z = random.randint(1,7)
-		# code works for error vector = [0,1,2,4]
-		#correct_error_vector=[1,2,4]
-		#range_error_vector=[1,2,3,4,5,6,7,8]
-		#z=random.choice(correct_error_vector)
-		z=1
+		#range_error_vector=[1,2,3,4,5,6,7]
+		#z=int(random.choice(correct_error_vector))
+		z=self.error_vector
 		c = bitFlip(modTwo(m*self.GPrime),z)
 		return c
 
@@ -295,7 +302,7 @@ class publicKeyH84:
 			d1 = self.encrypt(m_1_m)
 			for d in range(0,d1.size):
 				c1 += str(d1.item(d))
-			cf.write(chr(int(c1,2)))
+			cf.write(bytes([int(c1,2)]))
 
 			#Second half byte of message text
 			m_2 = '{0:08b}'.format(ord(m))[4:]
@@ -308,7 +315,7 @@ class publicKeyH84:
 			d2 = self.encrypt(m_2_m)
 			for d in range(0,d2.size):
 				c2 += str(d2.item(d))
-			cf.write(chr(int(c2,2)))
+			cf.write(bytes([int(c2,2)]))
 
 			m = mf.read(1)
 
@@ -379,10 +386,10 @@ class bruteForcerH84():
 		
 	def printCode(self):
 		"""Canonical Print self function"""
-		print "Calculated GPrime:\n" + str(self.GPrimeConsider) + "\n"
-		print "sM:\n" + str(self.sConsider) + "\n"
-		print "pM:\n" + str(self.pConsider) + "\n"
-		print "Attempts: " + str(self.attempts) + "\n"
+		print("Calculated GPrime:\n" + str(self.GPrimeConsider) + "\n")
+		print("sM:\n" + str(self.sConsider) + "\n")
+		print("pM:\n" + str(self.pConsider) + "\n")
+		print("Attempts: " + str(self.attempts) + "\n")
 		
 	def attemptKey(self):
 		"""Attempts to reconstitute S,P given GPrime (G is already known)"""
@@ -459,13 +466,18 @@ class privateKeyH1611:
 
 	def printCode(self):
 		"""Canonical print to screen function"""
-		print "S: \n" + str(self.S) + "\n"
-		print "P: \n" + str(self.P) + "\n"
-		print "GPrime: \n" + str(self.makeGPrime()) + "\n"
+		print("S: \n" + str(self.S) + "\n")
+		print("P: \n" + str(self.P) + "\n")
+		print("GPrime: \n" + str(self.makeGPrime()) + "\n")
 
 	def makeGPrime(self):
 		"""Returns a version of GPrime usable for calculations"""
 		return modTwo(self.S*self.G*self.P)
+
+	def decrypt(self,c):
+		cHat = c * modTwo(self.P.I.astype(int))
+		m = bitFlip(cHat,syndromeLookup(self.H,modTwo(self.H*cHat.T)))
+		return modTwo(m[0,0:11] * modTwo(self.S.I.astype(int)))
 
 
 #### Public Key H1611 ####
@@ -475,9 +487,14 @@ class publicKeyH1611:
 		self.GPrime = GPrime
 	def printCode(self):
 		"""Canonical print to screen"""
-		print "GPrime: \n" + str(self.GPrime) + "\n"
+		print("GPrime: \n" + str(self.GPrime) + "\n")
 
-##### Brute Forcer Based on H16,11 ####
+	def encrypt(self,m):
+		z = random.randint(1,15)
+		c = bitFlip(modTwo(m*self.GPrime),z)
+		return c
+
+# Brute Forcer Based on H16,11 #
 class bruteForcerH1611():
 	"""Data structure that attempts to create Private Key from Given Public Key"""
 	def __init__(self,GPrime):
@@ -509,10 +526,10 @@ class bruteForcerH1611():
 		
 	def printCode(self):
 		"""Canonical Print self function"""
-		print "Calculated GPrime:\n" + str(self.GPrimeConsider) + "\n"
-		print "sM:\n" + str(self.sConsider) + "\n"
-		print "pM:\n" + str(self.pConsider) + "\n"
-		print "Attempts: " + str(self.attempts) + "\n"
+		print("Calculated GPrime:\n" + str(self.GPrimeConsider) + "\n")
+		print("sM:\n" + str(self.sConsider) + "\n")
+		print("pM:\n" + str(self.pConsider) + "\n")
+		print("Attempts: " + str(self.attempts) + "\n")
 		
 	def attemptKey(self):
 		"""Attempts to reconstitute S,P given GPrime (G is already known)"""
@@ -575,6 +592,3 @@ class lookupDNA():
 		
 if __name__ == "__main__":
 	pass
-
-
-
