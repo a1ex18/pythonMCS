@@ -266,7 +266,12 @@ class publicKeyH84:
 	def encrypt(self,m):
 		"""When given a message will encode"""		
 		#Error vector will be random
-		z = random.randint(1,7)
+		#z = random.randint(1,7)
+		# code works for error vector = [0,1,2,4]
+		#correct_error_vector=[1,2,4]
+		#range_error_vector=[1,2,3,4,5,6,7,8]
+		#z=random.choice(correct_error_vector)
+		z=1
 		c = bitFlip(modTwo(m*self.GPrime),z)
 		return c
 
